@@ -23,9 +23,9 @@ For a 1:1 custom cnc you can reach out to me and talk about pricing and features
 
 ---
 
-## 📄 License
+## 📄 ToS
 
-Distributed under the MIT License. See [`LICENSE`](LICENSE) for more information.
+Distributed under the MIT License. See [`ToS.md`](ToS.md) for more information.
 
 ---
 
