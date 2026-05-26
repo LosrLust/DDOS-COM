@@ -291,6 +291,7 @@ func mainMenu(s *Session) {
 	render := func() {
 		var b strings.Builder
 		b.WriteString(Clear)
+		b.WriteString("\033[?1000h\033[?25l")
 		drawBanner(&b, 2)
 		fmt.Fprintf(&b, "%s%s● Connected as %s%s%s  %s(%s)%s",
 			at(10, 4), Green, White, s.User.Username, Reset, Gray, s.User.Rank, Reset)
@@ -420,7 +421,6 @@ func showUsers(s *Session) {
 
 func showAdmin(s *Session) {
 	enableMouse(s.Conn)
-	defer disableMouse(s.Conn)
 
 	sel := 0
 	msg := ""
