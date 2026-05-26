@@ -1,0 +1,7 @@
+*.exe
+*.db
+*.key
+host.key
+cnc.db
+SSH_CNC_GUI_TEMPLATE
+ssh-cnc-gui
