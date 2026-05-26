@@ -264,7 +264,7 @@ func mainMenu(s *Session) {
 		{"PROFILE", showProfile, false},
 		{"SESSIONS", showSessions, false},
 		{"CREDITS", showCredits, false},
-		{"USERS", showUsers, true},
+		{"ADMIN", showAdmin, true},
 		{"PASSWD", showPasswd, false},
 		{"LOGOUT", nil, false},
 	}
@@ -416,6 +416,193 @@ func showUsers(s *Session) {
 			}
 		}
 	})
+}
+
+func showAdmin(s *Session) {
+	enableMouse(s.Conn)
+	defer disableMouse(s.Conn)
+
+	sel := 0
+	msg := ""
+
+	userField := Field{Row: 15, X1: 24, X2: 53, MaxLen: 30}
+	passField := Field{Row: 17, X1: 24, X2: 53, MaxLen: 30, Mask: true}
+	rankField := Field{Row: 19, X1: 24, X2: 53, MaxLen: 16}
+
+	createBtn := Button{Label: "CREATE", Row: 21, X1: 24, X2: 35, Color: Green}
+	deleteBtn := Button{Label: "DELETE", Row: 21, X1: 38, X2: 49, Color: Red}
+	promoteBtn := Button{Label: "RANK", Row: 21, X1: 52, X2: 63, Color: Cyan}
+	listBtn := Button{Label: "LIST", Row: 21, X1: 66, X2: 77, Color: Yellow}
+	backBtn := Button{Label: "BACK", Row: 23, X1: 24, X2: 35, Color: Yellow}
+
+	render := func() {
+		var b strings.Builder
+		b.WriteString(Clear)
+		drawBanner(&b, 2)
+		fmt.Fprintf(&b, "%s%s%s─── %sAdmin Panel%s %s──────────────────────────────────%s",
+			at(10, 4), DGray, Bold, Cyan, Reset, DGray, Reset)
+		fmt.Fprintf(&b, "%s%sManage users: create / delete / set rank.%s", at(12, 8), Gray, Reset)
+
+		fmt.Fprintf(&b, "%s%sUsername:%s", at(15, 10), White, Reset)
+		fmt.Fprintf(&b, "%s%sPassword:%s", at(17, 10), White, Reset)
+		fmt.Fprintf(&b, "%s%sRank:%s", at(19, 10), White, Reset)
+
+		drawField(&b, userField, sel == 0)
+		drawField(&b, passField, sel == 1)
+		drawField(&b, rankField, sel == 2)
+
+		drawButton(&b, createBtn, false)
+		drawButton(&b, deleteBtn, false)
+		drawButton(&b, promoteBtn, false)
+		drawButton(&b, listBtn, false)
+		drawButton(&b, backBtn, false)
+
+		if msg != "" {
+			fmt.Fprintf(&b, "%s%s", at(24, 8), msg)
+		}
+
+		s.Conn.Write([]byte(b.String()))
+	}
+
+	setDefaults := func() {
+		if len(rankField.Value) == 0 {
+			rankField.Value = []byte("user")
+		}
+	}
+
+	for {
+		render()
+		ev := s.Reader.next()
+		if ev.Err != nil {
+			return
+		}
+
+		if ev.IsMouse {
+			switch {
+			case hitField(ev, userField):
+				sel = 0
+			case hitField(ev, passField):
+				sel = 1
+			case hitField(ev, rankField):
+				sel = 2
+			case hit(ev, createBtn):
+				setDefaults()
+				un := strings.TrimSpace(string(userField.Value))
+				pw := string(passField.Value)
+				rk := strings.TrimSpace(string(rankField.Value))
+				if un == "" || pw == "" {
+					msg = Red + "✗ username/password required." + Reset
+					continue
+				}
+				if rk == "" {
+					rk = "user"
+				}
+				if err := CreateUser(un, pw, rk); err != nil {
+					msg = Red + "✗ " + err.Error() + Reset
+				} else {
+					msg = Green + "✓ user created." + Reset
+					userField.Value = userField.Value[:0]
+					passField.Value = passField.Value[:0]
+					rankField.Value = []byte("user")
+				}
+			case hit(ev, deleteBtn):
+				un := strings.TrimSpace(string(userField.Value))
+				if un == "" {
+					msg = Red + "✗ username required for delete." + Reset
+					continue
+				}
+				if un == s.User.Username {
+					msg = Red + "✗ cannot delete yourself." + Reset
+					continue
+				}
+				if err := DeleteUser(un); err != nil {
+					msg = Red + "✗ " + err.Error() + Reset
+				} else {
+					msg = Green + "✓ user deleted." + Reset
+					userField.Value = userField.Value[:0]
+				}
+			case hit(ev, promoteBtn):
+				un := strings.TrimSpace(string(userField.Value))
+				rk := strings.TrimSpace(string(rankField.Value))
+				if un == "" || rk == "" {
+					msg = Red + "✗ username/rank required." + Reset
+					continue
+				}
+				if err := SetRank(un, rk); err != nil {
+					msg = Red + "✗ " + err.Error() + Reset
+				} else {
+					msg = Green + "✓ rank updated." + Reset
+				}
+			case hit(ev, listBtn):
+				showUsers(s)
+			case hit(ev, backBtn):
+				return
+			}
+			continue
+		}
+
+		switch ev.Key {
+		case 9:
+			sel = (sel + 1) % 3
+		case 127, 8:
+			switch sel {
+			case 0:
+				if len(userField.Value) > 0 {
+					userField.Value = userField.Value[:len(userField.Value)-1]
+				}
+			case 1:
+				if len(passField.Value) > 0 {
+					passField.Value = passField.Value[:len(passField.Value)-1]
+				}
+			case 2:
+				if len(rankField.Value) > 0 {
+					rankField.Value = rankField.Value[:len(rankField.Value)-1]
+				}
+			}
+		case 13, 10:
+			setDefaults()
+			un := strings.TrimSpace(string(userField.Value))
+			pw := string(passField.Value)
+			rk := strings.TrimSpace(string(rankField.Value))
+			if un == "" || pw == "" {
+				msg = Red + "✗ username/password required." + Reset
+				continue
+			}
+			if rk == "" {
+				rk = "user"
+			}
+			if err := CreateUser(un, pw, rk); err != nil {
+				msg = Red + "✗ " + err.Error() + Reset
+			} else {
+				msg = Green + "✓ user created." + Reset
+				userField.Value = userField.Value[:0]
+				passField.Value = passField.Value[:0]
+				rankField.Value = []byte("user")
+			}
+		case 3, 4:
+			return
+		default:
+			if ev.Key >= 32 && ev.Key < 127 {
+				switch sel {
+				case 0:
+					if len(userField.Value) < userField.MaxLen {
+						userField.Value = append(userField.Value, ev.Key)
+					}
+				case 1:
+					if len(passField.Value) < passField.MaxLen {
+						passField.Value = append(passField.Value, ev.Key)
+					}
+				case 2:
+					if len(rankField.Value) < rankField.MaxLen {
+						rankField.Value = append(rankField.Value, ev.Key)
+					}
+				}
+			}
+		}
+		if ev.Esc {
+			return
+		}
+	}
 }
 
 func showPasswd(s *Session) {
