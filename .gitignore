@@ -1,0 +1,5 @@
+*.exe
+*.db
+*.key
+host.key
+cnc.db
