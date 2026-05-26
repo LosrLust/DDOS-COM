@@ -1,0 +1,10 @@
+[general]
+name = "TELNET-CNC"
+version = "1.0.0"
+
+[telnet]
+host = "0.0.0.0"
+port = 2323
+
+[database]
+path = "cnc.db"
