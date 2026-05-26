@@ -1,3 +1,5 @@
 *.exe
 *.db
 cnc.db
+TELNET_CNC_TEMPLATE
+telnet-cnc

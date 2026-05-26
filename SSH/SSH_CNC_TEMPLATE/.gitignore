@@ -3,3 +3,5 @@
 *.key
 host.key
 cnc.db
+SSH_CNC_TEMPLATE
+ssh-cnc

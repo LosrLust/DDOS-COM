@@ -1,6 +1,6 @@
-# SSH CNC Template
+# TELNET CNC Template
 
-Minimal SSH CNC starter template (login + database + basic commands).
+Minimal Telnet CNC starter template (login + database + basic commands).
 
 ## Requirements
 
@@ -18,20 +18,20 @@ sudo apt install -y golang-go
 
 ```bash
 git clone https://github.com/LosrLust/DDOS-COM.git
-cd DDOS-COM/SSH/SSH_CNC_TEMPLATE
+cd DDOS-COM/TELNET/TELNET_CNC_TEMPLATE
 go mod tidy
 go run .
 ```
 
 The server will:
-- Listen on `0.0.0.0:2222`
-- Auto-generate `host.key` (SSH host key) on first run
+- Listen on `0.0.0.0:2323`
 - Auto-create `cnc.db` (SQLite database) and seed default user `admin` / `admin`
 
 ## Connect
 
 ```bash
-ssh -p 2222 anyone@<server-ip>
+sudo apt install -y telnet      # if not installed
+telnet <server-ip> 2323
 ```
 
 Login with `admin` / `admin`.
@@ -55,10 +55,9 @@ Login with `admin` / `admin`.
 Edit `config.toml`:
 
 ```toml
-[ssh]
+[telnet]
 host = "0.0.0.0"
-port = 2222
-key_file = "host.key"
+port = 2323
 
 [database]
 path = "cnc.db"
@@ -83,18 +82,18 @@ Register(&Cmd{
 ## Project Structure
 
 ```
-SSH_CNC_TEMPLATE/
+TELNET_CNC_TEMPLATE/
 ├── main.go          entry point + config loader
-├── config.toml      ssh / database config
+├── config.toml      telnet / database config
 ├── go.mod / go.sum
 └── core/
     ├── theme.go     colors + ASCII banner
     ├── database.go  sqlite + users + auth
     ├── commands.go  command system + built-in commands
-    └── server.go    ssh server + session + login + prompt
+    └── server.go    telnet server + IAC negotiation + session + login + prompt
 ```
 
 ## Credits
 
-- Template: cnc ssh
+- Template: cnc telnet
 - Developer: Lust
